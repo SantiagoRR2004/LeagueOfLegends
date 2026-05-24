@@ -10,8 +10,8 @@ We use GitHub accounts rather than real names. A new account should be added in 
 
 ## [Time data](./data/)
 
-We store time data for each LoL profile in the `data/` directory. Each file is a `.csv` with three columns: `start`, `end`, and `time`. Each row corresponds to a single week between meetings. Meetings are held every Wednesday at 20:00 (Spanish time), so `start` and `end` are Unix timestamps for that Wednesday at 20:00; the `end` of one week is the `start` of the next.
+We store time data for each LoL profile in the `data/` directory. Each file is a `.csv` with two columns: `start` and `time`. Each row corresponds to a single game played and they should be ordered from oldest to newest.
 
-The `time` column is the time spent playing LoL in seconds during that week. It should include games that end before the `end` time. Because it is almost impossible to scrape all profiles at exactly 20:00, some games may be stored in the wrong week.
+To obtain this data the web [op.gg](https://op.gg/) is used. In the future, we may want to scrape the data, but right now it isn't implemented. If you hover over the time ago of each game, you can get the exact beginning time of the game. This is what we use to fill the `start` column. The `time` column is the duration of the game in seconds.
 
-When adding old data, be careful with daylight saving time.
+In the future, we should find a way to obtain an API key from [Riot Games](https://developer.riotgames.com/) and use it to obtain the data. For this we would probably need to create an Auria Technologies League of Legends account.

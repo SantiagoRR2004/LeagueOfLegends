@@ -3,25 +3,24 @@ import json
 import os
 
 
-def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
+def getWorkWeeks() -> pd.DataFrame:
     """
-    Reads the LoL time data for the given username
-    and checks that it has the expected format.
+    Reads the work weeks from the CSV file and
+    checks that it has the expected format.
 
     Args:
-        - lolUsername (str): The LoL username to read the data for.
+        - None
 
     Returns:
-        - pd.DataFrame: The LoL time data for the given username.
+        - pd.DataFrame: The work weeks data.
     """
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
-    dataPath = os.path.join(os.path.dirname(currentDirectory), "data")
-    filePath = os.path.join(dataPath, f"{lolUsername}.csv")
+    filePath = os.path.join(os.path.dirname(currentDirectory), "weeks.csv")
 
     df = pd.read_csv(filePath)
 
     # Check that it has the expected columns
-    expectedColumns = {"start", "end", "time"}
+    expectedColumns = {"start", "end"}
     if not expectedColumns.issubset(df.columns):
         raise ValueError(f"Expected columns {expectedColumns} not found in {filePath}")
 
@@ -42,6 +41,31 @@ def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
     # start and end are Unix timestamps
     df["start"] = pd.to_datetime(df["start"], unit="s")
     df["end"] = pd.to_datetime(df["end"], unit="s")
+
+    return df
+
+
+def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
+    """
+    Reads the LoL time data for the given username
+    and checks that it has the expected format.
+
+    Args:
+        - lolUsername (str): The LoL username to read the data for.
+
+    Returns:
+        - pd.DataFrame: The LoL time data for the given username.
+    """
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    dataPath = os.path.join(os.path.dirname(currentDirectory), "data")
+    filePath = os.path.join(dataPath, f"{lolUsername}.csv")
+
+    df = pd.read_csv(filePath, parse_dates=["start"])
+
+    # Check that it has the expected columns
+    expectedColumns = {"start", "time"}
+    if not expectedColumns.issubset(df.columns):
+        raise ValueError(f"Expected columns {expectedColumns} not found in {filePath}")
 
     return df
 

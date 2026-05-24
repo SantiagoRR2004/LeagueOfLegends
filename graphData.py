@@ -3,6 +3,47 @@ import pandas as pd
 import src
 import os
 
+
+def buildWeeklyTimeData(gamesDf: pd.DataFrame, weeksDf: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregate game time into the week in which each game finishes.
+
+    Args:
+        - gamesDf (pd.DataFrame): Game rows with start and time columns.
+        - weeksDf (pd.DataFrame): Week boundaries with start and end columns.
+
+    Returns:
+        - pd.DataFrame: One row per week with the summed time in seconds.
+    """
+    weeklyDf = weeksDf[["start", "end"]].copy()
+    weeklyDf["time"] = 0
+
+    if gamesDf.empty:
+        return pd.DataFrame(columns=["start", "end", "time"])
+
+    gamesDf["start"] = pd.to_datetime(gamesDf["start"])
+    gamesDf["finish"] = gamesDf["start"] + pd.to_timedelta(gamesDf["time"], unit="s")
+
+    # Cut games into weeks based on their finish time
+    weekBoundaries = list(weeksDf["start"]) + [weeksDf.iloc[-1]["end"]]
+    weekIndex = pd.cut(
+        gamesDf["finish"],
+        bins=weekBoundaries,
+        right=False,
+        labels=False,
+    )
+
+    timeByWeek = gamesDf.groupby(weekIndex, dropna=True)["time"].sum()
+
+    # Start from the first week that has games
+    firstWeekIndex = int(timeByWeek.index.min())
+    weeklyDf = weeklyDf.iloc[firstWeekIndex:].copy()
+
+    weeklyDf["time"] = weeklyDf.index.to_series().map(timeByWeek).fillna(0).astype(int)
+
+    return weeklyDf
+
+
 if __name__ == "__main__":
     # Load the different premade Markdown parts
     premade = src.loadMarkdownParts()
@@ -16,6 +57,7 @@ if __name__ == "__main__":
     profilesLoL = src.getLoLProfiles()
     profilesGitHub = {int(k): v for k, v in src.getGitHubProfiles().items()}
     dataframesGitHub = {}
+    weeksDF = src.getWorkWeeks()
 
     # Create dataframe for GitHub profiles
     for githubID, usernameGH in profilesGitHub.items():
@@ -25,19 +67,8 @@ if __name__ == "__main__":
             if githubIDLoL == githubID:
                 dfsLoL.append(src.getLoLTimeData(usernameLoL))
 
-        if dfsLoL:
-            # Merge all profile rows and keep a single time column per start/end interval.
-            mergedDf = (
-                pd.concat(dfsLoL, ignore_index=True)
-                .groupby(["start", "end"], as_index=False)["time"]
-                .sum()
-                .sort_values("start")
-                .reset_index(drop=True)
-            )
-        else:
-            mergedDf = pd.DataFrame(columns=["start", "end", "time"])
-
-        dataframesGitHub[githubID] = mergedDf
+        mergedDf = pd.concat(dfsLoL, ignore_index=True) if dfsLoL else pd.DataFrame()
+        dataframesGitHub[githubID] = buildWeeklyTimeData(mergedDf, weeksDF)
 
     # The total time playing LoL
     mainMarkdown.append(premade["totalTime"])
