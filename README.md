@@ -1,6 +1,6 @@
 # League of Legends
 
-This repository stores the time spent playing League of Legends by all members of Auria Technologies.
+This repository stores the time spent playing League of Legends by all members of Auria Technologies. [Here is the basic extracted data](./graphs/README.md).
 
 ## Profiles
 

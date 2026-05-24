@@ -66,8 +66,11 @@ def getProfiles(platform: str) -> dict:
     with open(profilesPath, "r") as f:
         profiles = json.load(f)
 
+    def naturalKey(s):
+        return int(s) if s.isdigit() else s.lower()
+
     # Sort them in lowercase
-    profiles = dict(sorted(profiles.items(), key=lambda item: item[0].lower()))
+    profiles = dict(sorted(profiles.items(), key=lambda item: naturalKey(item[0])))
 
     # Save correctly
     with open(profilesPath, "w", encoding="utf-8") as f:
@@ -79,3 +82,7 @@ def getProfiles(platform: str) -> dict:
 
 def getLoLProfiles() -> dict:
     return getProfiles("LoL")
+
+
+def getGitHubProfiles() -> dict:
+    return getProfiles("GitHub")

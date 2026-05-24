@@ -1,1 +1,2 @@
-from .files import getLoLTimeData, getLoLProfiles
+from .files import getLoLTimeData, getLoLProfiles, getGitHubProfiles
+from .markdownFunctions import markdownTable, loadMarkdownParts
