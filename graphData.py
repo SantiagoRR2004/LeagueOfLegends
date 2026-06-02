@@ -149,6 +149,27 @@ if __name__ == "__main__":
     plt.close()
     mainMarkdown.append(premade["weeklyGraph"])
 
+    # Create a graph of the time by week for each profile
+    plt.figure(figsize=(10, 6))
+    for githubID, df in dataframesGitHub.items():
+        plt.plot(
+            df["start"],
+            df["time"],
+            linestyle="-",
+            label=profilesGitHub[githubID],
+        )
+    plt.legend()
+    plt.title("Time Spent Playing LoL by Week and Profile")
+    plt.xlabel("Week")
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%-d %b"))
+    plt.ylabel("Time")
+    plt.gca().yaxis.set_major_formatter(
+        FuncFormatter(lambda value, _: str(timedelta(seconds=int(value))))
+    )
+    plt.savefig(os.path.join(graphsPath, "weekly.png"), bbox_inches="tight")
+    plt.close()
+    mainMarkdown.append(premade["weekUser"])
+
     # Save the Markdown to a file
     with open(os.path.join(graphsPath, "README.md"), "w") as f:
         f.write("\n".join(mainMarkdown))
