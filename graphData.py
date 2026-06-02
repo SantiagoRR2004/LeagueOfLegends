@@ -1,3 +1,6 @@
+from matplotlib.ticker import FuncFormatter
+from matplotlib import dates as mdates
+from matplotlib import pyplot as plt
 from datetime import timedelta
 import pandas as pd
 import src
@@ -125,6 +128,26 @@ if __name__ == "__main__":
     }
 
     mainMarkdown.append(src.markdownTable(timeByWeekTable))
+
+    # Create a graph of the total time by week
+    timeByWeekRows = sorted(timeByWeekRows, key=lambda row: row[0])
+    plt.figure(figsize=(10, 6))
+    plt.plot(
+        [row[0] for row in timeByWeekRows],
+        [row[2] for row in timeByWeekRows],
+        marker="o",
+        linestyle="-",
+    )
+    plt.title("Total Time Spent Playing LoL by Week")
+    plt.xlabel("Week")
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%-d %b"))
+    plt.ylabel("Time")
+    plt.gca().yaxis.set_major_formatter(
+        FuncFormatter(lambda value, _: str(timedelta(seconds=int(value))))
+    )
+    plt.savefig(os.path.join(graphsPath, "totalWeekly.png"), bbox_inches="tight")
+    plt.close()
+    mainMarkdown.append(premade["weeklyGraph"])
 
     # Save the Markdown to a file
     with open(os.path.join(graphsPath, "README.md"), "w") as f:
