@@ -1,6 +1,30 @@
 from datetime import datetime
 from bs4 import BeautifulSoup
+from modules import Internet
 import pandas as pd
+import atexit
+import time
+
+driver = None
+
+
+def getDriver() -> Internet.WebDriver:
+    """
+    Get the Selenium WebDriver instance, creating it if it doesn't exist.
+
+    Args:
+        - None
+
+    Returns:
+        - Internet.WebDriver: The Selenium WebDriver instance.
+    """
+    global driver
+
+    if driver is None:
+        driver = Internet.configureChrome(False)
+        atexit.register(driver.quit)
+
+    return driver
 
 
 def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
@@ -65,3 +89,38 @@ def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
     df = df.sort_values(by="start").reset_index(drop=True)
 
     return df
+
+
+def getHTML(username: str) -> BeautifulSoup:
+    """
+    Retrieves the HTML of the OP.GG page for the given username and returns it as a BeautifulSoup object.
+
+    It tries to load the max number of battles possible.
+
+    Args:
+        - username (str): The username of the player whose OP.GG page we want to scrape.
+
+    Returns:
+        - BeautifulSoup: The BeautifulSoup object containing the HTML of the OP.GG page.
+    """
+    driver = getDriver()
+    name, tag = username.split("#")
+
+    # TODO: Make this work for other regions
+    url = f"https://www.op.gg/summoners/euw/{name}-{tag}"
+    driver.get(url)
+
+    # Wait 5 seconds
+    time.sleep(5)
+
+    # Click the "Show More" button until it is no longer present
+    while True:
+        try:
+            Internet.clickButton(driver, "Show more")
+        except Exception:
+            break
+
+    # Wait 5 seconds
+    time.sleep(5)
+
+    return BeautifulSoup(driver.page_source, "html.parser")
