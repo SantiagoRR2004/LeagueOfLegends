@@ -2,15 +2,23 @@ name: Run graphData.py
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Run scrapeData.py
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v3
