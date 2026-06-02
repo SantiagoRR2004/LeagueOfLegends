@@ -1,3 +1,4 @@
 black
+beautifulsoup4
 matplotlib
 pandas

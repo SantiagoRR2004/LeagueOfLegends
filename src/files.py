@@ -60,6 +60,10 @@ def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
     dataPath = os.path.join(os.path.dirname(currentDirectory), "data")
     filePath = os.path.join(dataPath, f"{lolUsername}.csv")
 
+    if not os.path.exists(filePath):
+        # Return an empty DataFrame with the expected columns
+        return pd.DataFrame(columns=["start", "time"])
+
     df = pd.read_csv(filePath, parse_dates=["start"])
 
     # Check that it has the expected columns
@@ -110,3 +114,25 @@ def getLoLProfiles() -> dict:
 
 def getGitHubProfiles() -> dict:
     return getProfiles("GitHub")
+
+
+def combineData(newData: pd.DataFrame, username: str) -> None:
+    """
+    Combines the new data with the existing data for the given username.
+
+    Args:
+        - newData (pd.DataFrame): The new data to combine.
+        - username (str): The username to combine the data for.
+
+    Returns:
+        - None
+    """
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    dataPath = os.path.join(os.path.dirname(currentDirectory), "data")
+    filePath = os.path.join(dataPath, f"{username}.csv")
+
+    existingData = getLoLTimeData(username)
+    combinedData = pd.concat([existingData, newData], ignore_index=True)
+    combinedData.drop_duplicates(subset=["start"], keep="last", inplace=True)
+    combinedData.sort_values(by="start", inplace=True)
+    combinedData.to_csv(filePath, index=False)
