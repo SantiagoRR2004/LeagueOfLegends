@@ -6,4 +6,4 @@ from .files import (
     combineData,
 )
 from .markdownFunctions import markdownTable, loadMarkdownParts
-from .scraping import getBattlesFromHTML
+from .scraping import getBattlesFromHTML, getHTML

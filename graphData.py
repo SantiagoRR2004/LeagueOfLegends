@@ -89,7 +89,42 @@ if __name__ == "__main__":
         )
         totalTimeTable["Time"].append(str(timedelta(seconds=time)))
 
+    # Add the total time row to the Markdown
+    totalTimeTable["User"].append("Total")
+    totalTimeTable["Time"].append(str(timedelta(seconds=sum(totalTime.values()))))
+
     mainMarkdown.append(src.markdownTable(totalTimeTable))
+
+    # Calculate the total hours spent in a given week
+    mainMarkdown.append(premade["weekly"])
+    timeByWeekRows = []
+
+    for week in weeksDF.itertuples():
+        totalTime = int(
+            sum(
+                df.loc[
+                    (df["start"] >= week.start) & (df["start"] < week.end), "time"
+                ].sum()
+                for df in dataframesGitHub.values()
+            )
+        )
+        timeByWeekRows.append(
+            (
+                week.start,
+                week.end,
+                totalTime,
+            )
+        )
+
+    # Sort by total time in descending order
+    timeByWeekRows.sort(key=lambda row: row[2], reverse=True)
+    timeByWeekTable = {
+        "Start": [row[0].strftime("%-d %B %Y") for row in timeByWeekRows],
+        "End": [row[1].strftime("%-d %B %Y") for row in timeByWeekRows],
+        "Time": [str(timedelta(seconds=row[2])) for row in timeByWeekRows],
+    }
+
+    mainMarkdown.append(src.markdownTable(timeByWeekTable))
 
     # Save the Markdown to a file
     with open(os.path.join(graphsPath, "README.md"), "w") as f:
