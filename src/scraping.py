@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
+from zoneinfo import ZoneInfo
 from modules import Internet
 import pandas as pd
 import atexit
@@ -77,6 +78,10 @@ def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
         "div", class_="flex min-w-0 flex-1 flex-col bg-[var(--game-item-color-100)]"
     )
 
+    browserTimeZone = driver.execute_script(
+        "return Intl.DateTimeFormat().resolvedOptions().timeZone"
+    )
+
     for battleDiv in battleDivs:
 
         # The duration is in the div with class="flex gap-2 md:flex-col md:gap-0"
@@ -104,20 +109,13 @@ def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
         if tooltipSpan is None:
             raise ValueError("Could not find tooltip span in battle div")
 
-        browser_time_zone = driver.execute_script(
-            "return Intl.DateTimeFormat().resolvedOptions().timeZone"
-        )
-        utc_offset_minutes = driver.execute_script(
-            "return new Date().getTimezoneOffset()"
-        )
-        current_browser_time = driver.execute_script("return new Date().toString()")
-
-        print(browser_time_zone)
-        print(utc_offset_minutes)
-        print(current_browser_time)
-
         startTimeText = tooltipSpan["data-tooltip-content"]
         dt = datetime.strptime(startTimeText, "%m/%d/%Y, %I:%M %p")
+        dt = (
+            dt.replace(tzinfo=ZoneInfo(browserTimeZone))
+            .astimezone(timezone.utc)
+            .replace(tzinfo=None)
+        )
 
         rows.append({"start": dt, "time": durationSeconds})
 
