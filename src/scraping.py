@@ -6,8 +6,6 @@ import atexit
 import time
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 import chromedriver_autoinstaller
 from pyvirtualdisplay import Display
 
@@ -105,6 +103,18 @@ def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
         tooltipSpan = battleDiv.find("span", {"data-tooltip-id": "opgg-tooltip"})
         if tooltipSpan is None:
             raise ValueError("Could not find tooltip span in battle div")
+
+        browser_time_zone = driver.execute_script(
+            "return Intl.DateTimeFormat().resolvedOptions().timeZone"
+        )
+        utc_offset_minutes = driver.execute_script(
+            "return new Date().getTimezoneOffset()"
+        )
+        current_browser_time = driver.execute_script("return new Date().toString()")
+
+        print(browser_time_zone)
+        print(utc_offset_minutes)
+        print(current_browser_time)
 
         startTimeText = tooltipSpan["data-tooltip-content"]
         dt = datetime.strptime(startTimeText, "%m/%d/%Y, %I:%M %p")
