@@ -1,3 +1,4 @@
+from selenium.webdriver.common.by import By
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from zoneinfo import ZoneInfo
@@ -152,6 +153,13 @@ def getHTML(username: str) -> BeautifulSoup:
 
     # Wait 5 seconds
     time.sleep(5)
+
+    elements = driver.find_elements(
+        By.XPATH, "//*[contains(text(), 'No search results for')]"
+    )
+
+    if any(e.is_displayed() for e in elements):
+        print(f"\nCheck username: {username} because it might not exist.")
 
     # Click the "Show More" button until it is no longer present
     while True:
