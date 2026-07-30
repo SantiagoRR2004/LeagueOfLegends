@@ -47,6 +47,25 @@ def buildWeeklyTimeData(gamesDf: pd.DataFrame, weeksDf: pd.DataFrame) -> pd.Data
     return weeklyDf
 
 
+def createUserString(githubID: int, githubUsername: str) -> str:
+    """
+    Create a Markdown string for a user with their GitHub profile picture and username.
+
+    Args:
+        - githubID (int): The GitHub user ID.
+        - githubUsername (str): The GitHub username.
+
+    Returns:
+        - str: A Markdown string with the user's profile picture and username.
+    """
+    profilePicture = f'<span><a href="https://github.com/{githubUsername}"><img src="https://avatars.githubusercontent.com/u/{githubID}" style="width:1ch;" alt=""></span>'
+
+    # White space that can't be touched by the neighboring urls
+    whiteSpace = "<a>&ensp;</a>"
+
+    return f"{profilePicture}{whiteSpace}[{profilesGitHub[githubID]}](https://github.com/{profilesGitHub[githubID]}){whiteSpace}{profilePicture}"
+
+
 if __name__ == "__main__":
     # Load the different premade Markdown parts
     premade = src.loadMarkdownParts()
@@ -59,11 +78,12 @@ if __name__ == "__main__":
 
     profilesLoL = src.getLoLProfiles()
     profilesGitHub = {int(k): v for k, v in src.getGitHubProfiles().items()}
-    dataframesGitHub = {}
+    dataframesGitHubTotal = {}
+    dataframesGitHubWeekly = {}
     weeksDF = src.getWorkWeeks()
 
     # Create dataframe for GitHub profiles
-    for githubID, usernameGH in profilesGitHub.items():
+    for githubID in profilesGitHub.keys():
         dfsLoL = []
 
         for usernameLoL, githubIDLoL in profilesLoL.items():
@@ -71,24 +91,30 @@ if __name__ == "__main__":
                 dfsLoL.append(src.getLoLTimeData(usernameLoL))
 
         mergedDf = pd.concat(dfsLoL, ignore_index=True) if dfsLoL else pd.DataFrame()
-        dataframesGitHub[githubID] = buildWeeklyTimeData(mergedDf, weeksDF)
+
+        # Create the column "end"
+        mergedDf["end"] = mergedDf["start"] + pd.to_timedelta(
+            mergedDf["time"], unit="s"
+        )
+
+        # Sort the merged dataframe by start time
+        mergedDf.sort_values(by="start", inplace=True)
+
+        dataframesGitHubTotal[githubID] = mergedDf.copy()
+        dataframesGitHubWeekly[githubID] = buildWeeklyTimeData(mergedDf, weeksDF)
 
     # The total time playing LoL
     mainMarkdown.append(premade["totalTime"])
     totalTime = {
-        githubID: int(df["time"].sum()) for githubID, df in dataframesGitHub.items()
+        githubID: int(df["time"].sum())
+        for githubID, df in dataframesGitHubWeekly.items()
     }
     totalTime = dict(sorted(totalTime.items(), key=lambda item: item[1], reverse=True))
     totalTimeTable = {"User": [], "Time": []}
 
     for githubID, time in totalTime.items():
-        profilePicture = f'<span><a href="https://github.com/{profilesGitHub[githubID]}"><img src="https://avatars.githubusercontent.com/u/{githubID}" style="width:1ch;" alt=""></span>'
-
-        # White space that can't be touched by the neighboring urls
-        whiteSpace = "<a>&ensp;</a>"
-
         totalTimeTable["User"].append(
-            f"{profilePicture}{whiteSpace}[{profilesGitHub[githubID]}](https://github.com/{profilesGitHub[githubID]}){whiteSpace}{profilePicture}"
+            createUserString(githubID, profilesGitHub[githubID])
         )
         totalTimeTable["Time"].append(str(timedelta(seconds=time)))
 
@@ -108,7 +134,7 @@ if __name__ == "__main__":
                 df.loc[
                     (df["start"] >= week.start) & (df["start"] < week.end), "time"
                 ].sum()
-                for df in dataframesGitHub.values()
+                for df in dataframesGitHubWeekly.values()
             )
         )
         timeByWeekRows.append(
@@ -149,9 +175,48 @@ if __name__ == "__main__":
     plt.close()
     mainMarkdown.append(premade["weeklyGraph"])
 
+    # Create a table with the time since the latest match
+    totalCleanTimeTable = {"User": [], "Maximum": [], "Current": []}
+
+    for githubID in profilesGitHub.keys():
+        totalCleanTimeTable["User"].append(
+            createUserString(githubID, profilesGitHub[githubID])
+        )
+
+        # lastMatchRow = dataframesGitHubTotal[githubID]["start"].idxmax()
+        lastMatchTime = dataframesGitHubTotal[githubID]["end"].max()
+        timeSinceLastMatch = (pd.Timestamp.now() - lastMatchTime).total_seconds()
+        totalCleanTimeTable["Current"].append(int(timeSinceLastMatch))
+
+        gaps = (
+            dataframesGitHubTotal[githubID]["start"]
+            - dataframesGitHubTotal[githubID]["end"].shift()
+        ).dt.total_seconds()
+
+        totalCleanTimeTable["Maximum"].append(str(timedelta(seconds=int(gaps.max()))))
+
+    # Sort by time since last match in descending order
+    totalCleanTimeTable = {
+        key: [
+            val
+            for _, val in sorted(
+                zip(totalCleanTimeTable["Current"], values), reverse=True
+            )
+        ]
+        for key, values in totalCleanTimeTable.items()
+    }
+
+    # Turn time into a string for the Markdown table
+    totalCleanTimeTable["Current"] = [
+        str(timedelta(seconds=value)) for value in totalCleanTimeTable["Current"]
+    ]
+
+    mainMarkdown.append(premade["cleanTime"])
+    mainMarkdown.append(src.markdownTable(totalCleanTimeTable))
+
     # Create a graph of the time by week for each profile
     plt.figure(figsize=(10, 6))
-    for githubID, df in dataframesGitHub.items():
+    for githubID, df in dataframesGitHubWeekly.items():
         plt.plot(
             df["start"],
             df["time"],
