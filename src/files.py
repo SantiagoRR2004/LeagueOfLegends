@@ -62,7 +62,12 @@ def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
 
     if not os.path.exists(filePath):
         # Return an empty DataFrame with the expected columns
-        return pd.DataFrame(columns=["start", "time"])
+        return pd.DataFrame(
+            {
+                "start": pd.Series(dtype="datetime64[ns]"),
+                "time": pd.Series(dtype="int64"),
+            }
+        )
 
     df = pd.read_csv(filePath, parse_dates=["start"])
 
@@ -70,6 +75,10 @@ def getLoLTimeData(lolUsername: str) -> pd.DataFrame:
     expectedColumns = {"start", "time"}
     if not expectedColumns.issubset(df.columns):
         raise ValueError(f"Expected columns {expectedColumns} not found in {filePath}")
+
+    # Make the correct types
+    df["start"] = pd.to_datetime(df["start"])
+    df["time"] = df["time"].astype(int)
 
     return df
 

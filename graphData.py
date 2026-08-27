@@ -183,17 +183,23 @@ if __name__ == "__main__":
             createUserString(githubID, profilesGitHub[githubID])
         )
 
-        # lastMatchRow = dataframesGitHubTotal[githubID]["start"].idxmax()
-        lastMatchTime = dataframesGitHubTotal[githubID]["end"].max()
-        timeSinceLastMatch = (pd.Timestamp.now() - lastMatchTime).total_seconds()
-        totalCleanTimeTable["Current"].append(int(timeSinceLastMatch))
+        if dataframesGitHubTotal[githubID].empty:
+            totalCleanTimeTable["Current"].append(0)
+            totalCleanTimeTable["Maximum"].append("0:00:00")
 
-        gaps = (
-            dataframesGitHubTotal[githubID]["start"]
-            - dataframesGitHubTotal[githubID]["end"].shift()
-        ).dt.total_seconds()
+        else:
+            lastMatchTime = dataframesGitHubTotal[githubID]["end"].max()
+            timeSinceLastMatch = (pd.Timestamp.now() - lastMatchTime).total_seconds()
+            totalCleanTimeTable["Current"].append(int(timeSinceLastMatch))
 
-        totalCleanTimeTable["Maximum"].append(str(timedelta(seconds=int(gaps.max()))))
+            gaps = (
+                dataframesGitHubTotal[githubID]["start"]
+                - dataframesGitHubTotal[githubID]["end"].shift()
+            ).dt.total_seconds()
+
+            totalCleanTimeTable["Maximum"].append(
+                str(timedelta(seconds=int(gaps.max())))
+            )
 
     # Sort by time since last match in descending order
     totalCleanTimeTable = {
