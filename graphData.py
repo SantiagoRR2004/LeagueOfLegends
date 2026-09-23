@@ -110,6 +110,7 @@ if __name__ == "__main__":
         for githubID, df in dataframesGitHubWeekly.items()
     }
     totalTime = dict(sorted(totalTime.items(), key=lambda item: item[1], reverse=True))
+    profileOrder = list(totalTime)
     totalTimeTable = {"User": [], "Time": []}
 
     for githubID, time in totalTime.items():
@@ -222,7 +223,8 @@ if __name__ == "__main__":
 
     # Create a graph of the time by week for each profile
     plt.figure(figsize=(10, 6))
-    for githubID, df in dataframesGitHubWeekly.items():
+    for githubID in profileOrder:
+        df = dataframesGitHubWeekly[githubID]
         plt.plot(
             df["start"],
             df["time"],
@@ -240,6 +242,40 @@ if __name__ == "__main__":
     plt.savefig(os.path.join(graphsPath, "weekly.png"), bbox_inches="tight")
     plt.close()
     mainMarkdown.append(premade["weekUser"])
+
+    # Create the individual graphs by week for each profile
+    individualMarkdown = ""
+    for githubID in profileOrder:
+        df = dataframesGitHubWeekly[githubID]
+        individualMarkdown += (
+            f"## {createUserString(githubID, profilesGitHub[githubID])}\n\n"
+        )
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(
+            df["start"],
+            df["time"],
+            linestyle="-",
+            label=profilesGitHub[githubID],
+        )
+        plt.title(f"Time Spent Playing LoL by Week for {profilesGitHub[githubID]}")
+        plt.xlabel("Week")
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%-d %b"))
+        plt.ylabel("Time")
+        plt.gca().yaxis.set_major_formatter(
+            FuncFormatter(lambda value, _: str(timedelta(seconds=int(value))))
+        )
+        plt.savefig(
+            os.path.join(graphsPath, f"{profilesGitHub[githubID]}.png"),
+            bbox_inches="tight",
+        )
+        plt.close()
+
+        individualMarkdown += (
+            f"![{profilesGitHub[githubID]}](./{profilesGitHub[githubID]}.png)\n\n"
+        )
+
+    mainMarkdown.append(individualMarkdown)
 
     # Save the Markdown to a file
     with open(os.path.join(graphsPath, "README.md"), "w") as f:
