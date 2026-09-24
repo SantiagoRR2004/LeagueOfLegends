@@ -191,6 +191,13 @@ if __name__ == "__main__":
         else:
             lastMatchTime = dataframesGitHubTotal[githubID]["end"].max()
             timeSinceLastMatch = (pd.Timestamp.now() - lastMatchTime).total_seconds()
+
+            if timeSinceLastMatch < 0:
+                print("Current time without playing should not be negative")
+                print(f"Profile: {profilesGitHub[githubID]}")
+                print(f"Current time: {pd.Timestamp.now()}")
+                print(f"Last match time: {lastMatchTime}")
+
             totalCleanTimeTable["Current"].append(int(timeSinceLastMatch))
 
             gaps = (
