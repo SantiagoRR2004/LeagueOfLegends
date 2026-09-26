@@ -1,3 +1,4 @@
+from .githubIssues import reportMissingProfile
 from selenium.webdriver.common.by import By
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
@@ -132,7 +133,7 @@ def getBattlesFromHTML(soup: BeautifulSoup) -> pd.DataFrame:
     return df
 
 
-def getHTML(username: str) -> BeautifulSoup:
+def getHTML(username: str, githubUsername: str) -> BeautifulSoup:
     """
     Retrieves the HTML of the OP.GG page for the given username and returns it as a BeautifulSoup object.
 
@@ -140,6 +141,7 @@ def getHTML(username: str) -> BeautifulSoup:
 
     Args:
         - username (str): The username of the player whose OP.GG page we want to scrape.
+        - githubUsername (str): The GitHub username of the player, used for reporting missing profiles.
 
     Returns:
         - BeautifulSoup: The BeautifulSoup object containing the HTML of the OP.GG page.
@@ -160,6 +162,7 @@ def getHTML(username: str) -> BeautifulSoup:
 
     if any(e.is_displayed() for e in elements):
         print(f"\nCheck username: {username} because it might not exist.")
+        reportMissingProfile(username, githubUsername)
 
     # Click the "Show More" button until it is no longer present
     while True:

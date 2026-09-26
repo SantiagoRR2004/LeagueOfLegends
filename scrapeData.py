@@ -4,10 +4,13 @@ import src
 if __name__ == "__main__":
 
     profilesLoL = src.getLoLProfiles()
+    profilesGitHub = src.getGitHubProfiles()
     foundNewBattles = False
 
-    for username in tqdm.tqdm(profilesLoL.keys(), desc="Processing profiles"):
-        soup = src.getHTML(username)
+    for username, githubID in tqdm.tqdm(
+        profilesLoL.items(), desc="Processing profiles"
+    ):
+        soup = src.getHTML(username, profilesGitHub[str(githubID)])
         df = src.getBattlesFromHTML(soup)
 
         if not df.empty:
