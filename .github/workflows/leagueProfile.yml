@@ -1,0 +1,28 @@
+name: "Missing League profile"
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+
+permissions:
+  issues: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on inactive issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --search "updated:<$(date -u -d '7 days ago' '+%Y-%m-%d') in:title \"Missing League profile:\"" \
+            --json number,title \
+            --jq '.[] | select(.title | startswith("Missing League profile:")) | .number' |
+          while read -r issue; do
+            gh issue comment "$issue" \
+              --repo "${{ github.repository }}" \
+              --body "This issue has been inactive for 7 days. Please check if you can fix it."
+          done
