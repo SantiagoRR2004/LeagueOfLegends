@@ -98,7 +98,7 @@ if __name__ == "__main__":
         )
 
         # Sort the merged dataframe by start time
-        mergedDf.sort_values(by="start", inplace=True)
+        mergedDf = mergedDf.sort_values(by="start")
 
         dataframesGitHubTotal[githubID] = mergedDf.copy()
         dataframesGitHubWeekly[githubID] = buildWeeklyTimeData(mergedDf, weeksDF)
