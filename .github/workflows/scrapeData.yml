@@ -43,11 +43,13 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com"
+          git config --local user.name "${{ github.repository_owner }}"
           if ! git diff --quiet; then
             git add .
-            git commit -m "Executed scrapeData.py [GitHub Action]"
+            git commit \
+              -m "Executed scrapeData.py [GitHub Action]" \
+              -m "Co-authored-by: GitHub Action <action@github.com>"
             git push
           else
             echo "No changes to push."
