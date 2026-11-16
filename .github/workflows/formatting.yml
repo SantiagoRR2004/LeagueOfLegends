@@ -51,7 +51,7 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit \
               -m "Executed scrapeData.py [GitHub Action]" \
-              -m "Co-authored-by: ${{ github.repository_owner }} <${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com>"
+              -m "Co-authored-by: AuriaTechnologies <188308680+AuriaTechnologies@users.noreply.github.com>"
             git push
           else
             echo "No changes to push."
