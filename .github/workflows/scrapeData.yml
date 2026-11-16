@@ -47,9 +47,11 @@ jobs:
           git config --local user.name "AuriaTechnologies"
           if ! git diff --quiet; then
             git add .
+            CO_AUTHORS=$(jq -r 'to_entries[] | "Co-authored-by: \(.value) <\(.key)+\(.value)@users.noreply.github.com>"' profilesGitHub.json)
             git commit \
               -m "Executed scrapeData.py [GitHub Action]" \
-              -m "Co-authored-by: GitHub Action <action@github.com>"
+              -m "Co-authored-by: GitHub Action <action@github.com>" \
+              -m "$CO_AUTHORS"
             git push
           else
             echo "No changes to push."
